@@ -23,11 +23,12 @@ class OrderDetailsViewController: UIViewController {
         return refreshControl
     }()
 
-    private lazy var resultsController: ResultsController<StorageShipmentTracking> = {
+    private lazy var trackingResultsController: ResultsController<StorageShipmentTracking> = {
         let storageManager = AppDelegate.shared.storageManager
+        let predicate = NSPredicate(format: "siteID = %ld AND orderID = %ld", viewModel.order.siteID, viewModel.order.orderID)
         let descriptor = NSSortDescriptor(keyPath: \StorageShipmentTracking.dateShipped, ascending: true)
 
-        return ResultsController<StorageShipmentTracking>(storageManager: storageManager, sectionNameKeyPath: "dateShipped", sortedBy: [descriptor])
+        return ResultsController(storageManager: storageManager, matching: predicate, sortedBy: [descriptor])
     }()
 
     /// Indicates if the Billing details should be rendered.
@@ -52,8 +53,7 @@ class OrderDetailsViewController: UIViewController {
     ///
     var viewModel: OrderDetailsViewModel! {
         didSet {
-            reloadSections()
-            reloadTableViewIfPossible()
+            reloadTableViewSectionsAndData()
         }
     }
 
@@ -61,18 +61,14 @@ class OrderDetailsViewController: UIViewController {
     ///
     private var orderNotes: [OrderNote] = [] {
         didSet {
-            reloadSections()
-            reloadTableViewIfPossible()
+            reloadTableViewSectionsAndData()
         }
     }
 
-    /// Order Tracking
+    /// Order shipment tracking list
     ///
-    private var orderTracking: [ShipmentTracking] = [] {
-        didSet {
-            reloadSections()
-            reloadTableViewIfPossible()
-        }
+    private var orderTracking: [ShipmentTracking] {
+        return trackingResultsController.fetchedObjects
     }
 
     /// Haptic Feedback!
@@ -86,10 +82,10 @@ class OrderDetailsViewController: UIViewController {
         super.viewDidLoad()
         configureNavigation()
         configureTableView()
-        configureResultsController()
-        configureEntityListener()
         registerTableViewCells()
         registerTableViewHeaderFooters()
+        configureEntityListener()
+        configureTrackingResultsController()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -146,37 +142,31 @@ private extension OrderDetailsViewController {
         }
     }
 
-    /// Setup: Results Controller
-    ///
-    func configureResultsController() {
-//        resultsController.startForwardingEvents(to: tableView)
-//        try? resultsController.performFetch()
-        guard let shadowVM = viewModel else {
-            return
+    func configureTrackingResultsController() {
+        trackingResultsController.onDidChangeContent = { [weak self] in
+            self?.reloadTableViewSectionsAndData()
         }
-
-        ///  To be removed when I figure out why some data requests are failing
-        let mockTracking1 = ShipmentTracking(siteID: shadowVM.order.siteID, orderID: shadowVM.order.orderID, trackingID: "mock-tracking-id", trackingNumber: "XXX_YYY_ZZZ", trackingProvider: "HK POST", trackingURL: "http://automattic.com", dateShipped: nil)
-
-        let mockTracking2 = ShipmentTracking(siteID: shadowVM.order.siteID, orderID: shadowVM.order.orderID, trackingID: "mock-tracking-id", trackingNumber: "111_222_333", trackingProvider: "USPS WOO", trackingURL: "https://woocommerce.com", dateShipped: nil)
-        orderTracking = [mockTracking1, mockTracking2]
-
-        resultsController.onDidChangeContent = { [weak self] in
-            /// Failing for orders that have been fulfilled
-            self?.orderTracking = self?.resultsController.fetchedObjects ?? []
+        trackingResultsController.onDidResetContent = { [weak self] in
+            self?.reloadTableViewSectionsAndData()
         }
-
-        try? resultsController.performFetch()
+        try? trackingResultsController.performFetch()
     }
 
-    /// Reloads the tableView, granted that the view has been effectively loaded.
+    /// Reloads the tableView's data, assuming the view has been loaded.
     ///
-    func reloadTableViewIfPossible() {
+    func reloadTableViewDataIfPossible() {
         guard isViewLoaded else {
             return
         }
 
         tableView.reloadData()
+    }
+
+    /// Reloads the tableView's sections and data.
+    ///
+    func reloadTableViewSectionsAndData() {
+        reloadSections()
+        reloadTableViewDataIfPossible()
     }
 
     /// Registers all of the available TableViewCells
@@ -240,7 +230,7 @@ private extension OrderDetailsViewController {
         }()
 
         let tracking: Section? = {
-            guard viewModel.isProcessingPayment == false, orderTracking.count > 0 else {
+            guard orderTracking.count > 0 else {
                 return nil
             }
 
@@ -319,6 +309,11 @@ extension OrderDetailsViewController {
 
         group.enter()
         syncNotes { _ in
+            group.leave()
+        }
+
+        group.enter()
+        syncTracking() { _ in
             group.leave()
         }
 
@@ -535,7 +530,7 @@ private extension OrderDetailsViewController {
     }
 
     func syncTracking(onCompletion: ((Error?) -> ())? = nil) {
-        let action = ShipmentAction.synchronizeShipmentTrackingData(siteID: viewModel.order.siteID, orderID: viewModel.order.orderID) { [weak self] (error) in
+        let action = ShipmentAction.synchronizeShipmentTrackingData(siteID: viewModel.order.siteID, orderID: viewModel.order.orderID) { (error) in
             if let error = error {
                 DDLogError("⛔️ Error synchronizing tracking: \(error.localizedDescription)")
                 onCompletion?(error)
@@ -786,7 +781,7 @@ private extension OrderDetailsViewController {
 
     /// Checks if copying the row data at the provided indexPath is allowed
     ///
-    /// - Parameter indexPath: indexpath of the row to check
+    /// - Parameter indexPath: index path of the row to check
     /// - Returns: true is copying is allowed, false otherwise
     ///
     func checkIfCopyingIsAllowed(for indexPath: IndexPath) -> Bool {
