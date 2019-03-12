@@ -15,6 +15,11 @@ public struct ShipmentTrackingProviderGroup {
         self.name = name
         self.providers = providers
     }
+
+    public init(name: String, dictionary: [String: String]?) {
+        let providers = dictionary?.map({ ShipmentTrackingProvider(name: $0.key, url: $0.value) }) ?? []
+        self.init(name: name, providers: providers)
+    }
 }
 
 extension ShipmentTrackingProviderGroup: Comparable {
