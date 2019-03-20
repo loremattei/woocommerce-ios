@@ -6,7 +6,7 @@ platform :ios do
 # Environment
 ########################################################################
 Dotenv.load('~/.wcios-env.default')
-ENV[GHHELPER_REPO="woocommerce/woocommerce-iOS"]
+ENV[GHHELPER_REPO="loremattei/woocommerce-iOS"]
 ENV["PROJECT_NAME"]="WooCommerce"
 ENV["PUBLIC_CONFIG_FILE"]="config/Version.Public.xcconfig"
 ENV["DOWNLOAD_METADATA"]="fastlane/download_metadata.swift"
