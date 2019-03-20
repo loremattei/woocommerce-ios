@@ -1,3 +1,0 @@
-- ¿Gestionas más de una tienda? Puedes cambiar de sitio sin tener que salir y volver a acceder: accede a Configuración y toca Cambiar tienda. El nombre de la tienda activa se muestra en la pestaña “Mi tienda”.
-- Cuando se produce un error al añadir una nota o realizar un pedido, ahora en el cuadro de mensaje se muestra la opción “Reintentar” para que puedas intentarlo de nuevo.
-- Los pagos que recibes no son solo números redondos, así que ahora los pedidos pueden tener cantidades en decimales.

@@ -1,3 +1,0 @@
-- Manage more than one store? You can switch sites without logging in and out: head to Settings and tap on Switch Store. The name of the active store displays on the “My Store” tab.
-- When adding a note or fulfilling an order fails, the message box now shows a “Retry” option so you can give it another go.
-- You don’t only take payments in round numbers, so orders can now have decimal quantities.

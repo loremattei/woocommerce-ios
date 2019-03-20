@@ -1,3 +1,0 @@
-- Birden fazla mağaza mı yönetiyorsunuz? Oturum açıp kapatmadan siteler arasında geçiş yapabilirsiniz. Ayarlar'a gidin ve Mağaza Değiştir'e dokunun. Etkin olan mağazanın arı “Mağazam” sekmesinde görüntülenir.
-- Bir not ekleme ya da siparişi yerine getirme başarısız olduğunda, tekrar deneyebilmeniz için mesaj kutusunda artık "Tekrar dene" seçeneği görüntüleniyor.
-- Siparişlerin artık ondalık miktarlarda olabilmesi için sadece yuvarlanmış sayılarda ödeme almakla kalmayacaksınız.
